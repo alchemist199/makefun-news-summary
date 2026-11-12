@@ -3,10 +3,16 @@
 Reads summary.txt from the repository root (the directory holding this
 file) and writes it unchanged to the output directory. Deterministic:
 the same bytes every run. Standard library only, no network.
+
+The gate requires UTF-8 text of 1 to 2,000 characters, not only white
+space, so the program validates the summary before writing it and
+fails loudly instead of producing an invalid entry.
 """
 
 import os
 import sys
+
+MAX_CHARS = 2000
 
 
 def main() -> int:
@@ -19,6 +25,14 @@ def main() -> int:
     with open(os.path.join(repo_dir, "summary.txt"), "r",
               encoding="utf-8") as f:
         text = f.read()
+
+    if not text.strip():
+        raise SystemExit("summary.txt is empty or only whitespace")
+    if len(text) > MAX_CHARS:
+        raise SystemExit(
+            f"summary.txt is {len(text)} characters, "
+            f"over the {MAX_CHARS} limit"
+        )
 
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, "entry.txt")
